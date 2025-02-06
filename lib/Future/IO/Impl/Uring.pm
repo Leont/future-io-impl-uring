@@ -132,7 +132,7 @@ sub syswrite($self, $fh, $buffer) {
 	return $future;
 }
 
-sub _subwrite($future, $fh, $buffer, $written) {
+sub _syswrite($future, $fh, $buffer, $written) {
 	$ring->write($fh, $buffer, -1, sub($res, $flags) {
 		if ($res > 0) {
 
