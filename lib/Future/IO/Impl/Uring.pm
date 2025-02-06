@@ -96,7 +96,6 @@ sub _sysread($fh, $future, $id, $buffer, $length, $offset) {
 		if ($res >= 0) {
 			if ($offset + $res == $length) {
 				$future->done($buffer);
-				#				$future->done($length ? $buffer : ());
 			} else {
 				_sysread($fh, $future, $id, $buffer, $length, $offset + $res);
 			}
@@ -132,10 +131,14 @@ sub syswrite($self, $fh, $buffer) {
 	return $future;
 }
 
-sub _subwrite($future, $fh, $buffer, $written) {
-	$ring->write($fh, $buffer, -1, sub($res, $flags) {
+sub _syswrite($future, $fh, $buffer, $written) {
+	$ring->write($fh, substr($buffer, $written), -1, sub($res, $flags) {
 		if ($res > 0) {
-
+			if ($res + $written == length $buffer) {
+				$future->done(length $buffer);
+			} else {
+				_syswrite($future, $fh, $buffer, $res + $written);
+			}
 		} else {
 			local $! = -$res;
 			$future->fail("syswrite: $!\n", syswrite => $fh, $!);
@@ -145,7 +148,7 @@ sub _subwrite($future, $fh, $buffer, $written) {
 
 sub syswrite_exactly($self, $fh, $buffer) {
 	my $future = Future::IO::Uring::_Future->new;
-	_syswrite($fh, $buffer, 0);
+	_syswrite($future, $fh, $buffer, 0);
 	return $future;
 }
 
