@@ -62,7 +62,7 @@ sub connect($self, $fh, $name) {
 sub sleep($self, $seconds) {
 	my $future = Future::IO::Uring::_Future->new;
 	my $time_spec = Time::Spec->new($seconds);
-	$ring->timeout($time_spec, 0, 0, IOSQE_ASYNC, sub($res, $flags) {
+	my $id = $ring->timeout($time_spec, 0, 0, 0, sub($res, $flags) {
 		if ($res != -ETIME) {
 			local $! = -$res;
 			$future->fail("sleep: $!\n");
@@ -71,6 +71,7 @@ sub sleep($self, $seconds) {
 		}
 		$time_spec;
 	});
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
 }
 
@@ -155,13 +156,14 @@ sub syswrite_exactly($self, $fh, $buffer) {
 sub waitpid($self, $pid) {
 	my $future = Future::IO::Uring::_Future->new;
 	my $info = Signal::Info->new;
-	$ring->waitid(P_PID, $pid, $info, WEXITED, 0, 0, sub($res, $flags) {
+	my $id = $ring->waitid(P_PID, $pid, $info, WEXITED, 0, 0, sub($res, $flags) {
 		if ($res >= 0) {
 			$future->done($info->code == CLD_EXITED ? ($info->status << 8) : $info->status);
 		} else {
 			$future->fail("waitpid: $!");
 		}
 	});
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
 }
 
