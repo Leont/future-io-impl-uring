@@ -16,7 +16,7 @@ use IO::Socket;
 my $ring = IO::Uring->new(32);
 
 sub accept($self, $fh) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	$ring->accept($fh, 0, sub($res, $flags) {
 		if ($res >= 0) {
 			my $accepted_fd = IO::Socket->new->fdopen($res, 'r+');
@@ -30,7 +30,7 @@ sub accept($self, $fh) {
 }
 
 sub alarm($self, $seconds) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $time_spec = Time::Spec->new($seconds);
 	my $id = $ring->timeout($time_spec, 0, IORING_TIMEOUT_REALTIME | IORING_TIMEOUT_ABS, 0, sub($res, $flags) {
 		if ($res != -ETIME) {
@@ -46,7 +46,7 @@ sub alarm($self, $seconds) {
 }
 
 sub connect($self, $fh, $name) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $id = $ring->connect($fh, $name, 0, sub($res, $flags) {
 		if ($res < 0) {
 			local $! = -$res;
@@ -60,7 +60,7 @@ sub connect($self, $fh, $name) {
 }
 
 sub sleep($self, $seconds) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $time_spec = Time::Spec->new($seconds);
 	my $id = $ring->timeout($time_spec, 0, 0, 0, sub($res, $flags) {
 		if ($res != -ETIME) {
@@ -76,7 +76,7 @@ sub sleep($self, $seconds) {
 }
 
 sub sysread($self, $fh, $length) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $buffer = "\0" x $length;
 	my $id = $ring->read($fh, $buffer, -1, IOSQE_ASYNC, sub($res, $flags) {
 		if ($res > 0) {
@@ -110,7 +110,7 @@ sub _sysread($fh, $future, $id, $buffer, $length, $offset) {
 }
 
 sub sysread_exactly($self, $fh, $length) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $buffer = "\0" x $length;
 	my $id;
 	_sysread($fh, $future, \$id, $buffer, $length, 0);
@@ -119,7 +119,7 @@ sub sysread_exactly($self, $fh, $length) {
 }
 
 sub syswrite($self, $fh, $buffer) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $id = $ring->write($fh, $buffer, -1, IOSQE_ASYNC, sub($res, $flags) {
 		if ($res >= 0) {
 			$future->done($res);
@@ -148,13 +148,13 @@ sub _syswrite($future, $fh, $buffer, $written) {
 }
 
 sub syswrite_exactly($self, $fh, $buffer) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	_syswrite($future, $fh, $buffer, 0);
 	return $future;
 }
 
 sub waitpid($self, $pid) {
-	my $future = Future::IO::Uring::_Future->new;
+	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $info = Signal::Info->new;
 	my $id = $ring->waitid(P_PID, $pid, $info, WEXITED, 0, 0, sub($res, $flags) {
 		if ($res >= 0) {
@@ -168,7 +168,7 @@ sub waitpid($self, $pid) {
 }
 
 package
-	Future::IO::Uring::_Future;
+	Future::IO::Impl::Uring::_Future;
 
 use parent 'Future';
 
