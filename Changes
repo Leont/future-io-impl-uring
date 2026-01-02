@@ -1,6 +1,7 @@
 Revision history for Future-IO-Impl-Uring
 
 {{$NEXT}}
+          - Implement send and recv
           - Implement ready_for_read and ready_for_write
 
 0.002     2025-02-19 17:05:07+01:00 Europe/Brussels

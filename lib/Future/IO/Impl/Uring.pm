@@ -90,6 +90,45 @@ sub ready_for_write($self, $fh) {
 
 }
 
+sub recv($self, $fh, $length, $flags) {
+	my $future = Future::IO::Impl::Uring::_Future->new;
+	my $buffer = "\0" x $length;
+	$flags //= 0;
+	my $id = $ring->recv($fh, $buffer, $flags, 0, IOSQE_ASYNC, sub($res, $flags) {
+		if ($res > 0) {
+			$future->done($res == $length ? $buffer : substr($buffer, 0, $res));
+		} elsif ($res == 0) {
+			$future->done;
+		} else {
+			local $! = -$res;
+			$future->fail("recv: $!\n", recv => $fh, $!);
+		}
+	});
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
+	return $future;
+}
+
+sub send($self, $fh, $buffer, $flags, $to) {
+	my $future = Future::IO::Impl::Uring::_Future->new;
+	my $callback = sub($res, $flags) {
+		if ($res >= 0) {
+			$future->done($res);
+		} else {
+			local $! = -$res;
+			$future->fail("send: $!\n", send => $fh, $!);
+		}
+	};
+	$flags //= 0;
+	my $id;
+	if (defined $to) {
+		$id = $ring->sendto($fh, $buffer, $flags, $to, 0, IOSQE_ASYNC, $callback);
+	} else {
+		$id = $ring->send($fh, $buffer, $flags, 0, IOSQE_ASYNC, $callback);
+	}
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
+	return $future;
+}
+
 sub sleep($self, $seconds) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $time_spec = Time::Spec->new($seconds);
