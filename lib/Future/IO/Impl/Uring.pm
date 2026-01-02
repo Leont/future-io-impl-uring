@@ -208,6 +208,8 @@ sub await($self) {
 	return $self;
 }
 
+1;
+
 # ABSTRACT: A Future::IO implementation for IO::Uring
 
 =head1 DESCRIPTION
