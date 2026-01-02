@@ -12,6 +12,7 @@ use Errno 'ETIME';
 use Signal::Info qw/CLD_EXITED/;
 use Time::Spec;
 use IO::Socket;
+use IO::Poll qw/POLLIN POLLOUT/;
 
 my $ring = IO::Uring->new(32);
 
@@ -57,6 +58,36 @@ sub connect($self, $fh, $name) {
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
+}
+
+sub ready_for_read($self, $fh) {
+	my $future = Future::IO::Impl::Uring::_Future->new;
+	my $id = $ring->poll($fh, POLLIN, 0, sub($res, $flags) {
+		if ($res >= 0) {
+			$future->done;
+		} else {
+			local $! = -$res;
+			$future->fail("ready_for_read: $!\n", sysread => $fh, $!);
+		}
+	});
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
+	return $future;
+
+}
+
+sub ready_for_write($self, $fh) {
+	my $future = Future::IO::Impl::Uring::_Future->new;
+	my $id = $ring->poll($fh, POLLOUT, 0, sub($res, $flags) {
+		if ($res >= 0) {
+			$future->done;
+		} else {
+			local $! = -$res;
+			$future->fail("ready_for_write$!\n", sysread => $fh, $!);
+		}
+	});
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
+	return $future;
+
 }
 
 sub sleep($self, $seconds) {
