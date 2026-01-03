@@ -67,7 +67,7 @@ sub ready_for_read($self, $fh) {
 			$future->done;
 		} else {
 			local $! = -$res;
-			$future->fail("ready_for_read: $!\n", sysread => $fh, $!);
+			$future->fail("ready_for_read: $!\n", ready_for_read => $fh, $!);
 		}
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
@@ -82,7 +82,7 @@ sub ready_for_write($self, $fh) {
 			$future->done;
 		} else {
 			local $! = -$res;
-			$future->fail("ready_for_write$!\n", sysread => $fh, $!);
+			$future->fail("ready_for_write: $!\n", ready_for_write => $fh, $!);
 		}
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
