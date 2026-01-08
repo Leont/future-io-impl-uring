@@ -72,7 +72,6 @@ sub ready_for_read($self, $fh) {
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
-
 }
 
 sub ready_for_write($self, $fh) {
@@ -87,7 +86,6 @@ sub ready_for_write($self, $fh) {
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
-
 }
 
 sub recv($self, $fh, $length, $flags) {
@@ -265,5 +263,7 @@ loaded, and it will provide the C<Future::IO> implementation methods:
 
    my $f = Future::IO->sleep(5);
    ...
+
+It requires Linux kernel 6.7 or higher to function.
 
 =cut
