@@ -7,7 +7,7 @@ use experimental 'signatures';
 use parent 'Future::IO::ImplBase';
 __PACKAGE__->APPLY;
 
-use IO::Uring qw/IOSQE_ASYNC IORING_TIMEOUT_ABS IORING_TIMEOUT_REALTIME IORING_TIMEOUT_ETIME_SUCCESS P_PID WEXITED/;
+use IO::Uring qw/IOSQE_ASYNC IORING_TIMEOUT_ABS IORING_TIMEOUT_REALTIME IORING_TIMEOUT_ETIME_SUCCESS P_PID P_PGID P_ALL WEXITED/;
 use Errno 'ETIME';
 use Signal::Info qw/CLD_EXITED/;
 use Time::Spec;
@@ -226,10 +226,12 @@ sub syswrite_exactly($self, $fh, $buffer) {
 sub waitpid($self, $pid) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $info = Signal::Info->new;
-	my $id = $ring->waitid(P_PID, $pid, $info, WEXITED, 0, 0, sub($res, $flags) {
+	my ($type, $arg) = $pid > 0 ? (P_PID, $pid) : $pid < 0 ? (P_PGID, -$pid) : (P_ALL, 0);
+	my $id = $ring->waitid($type, $arg, $info, WEXITED, 0, 0, sub($res, $flags) {
 		if ($res >= 0) {
 			$future->done($info->code == CLD_EXITED ? ($info->status << 8) : $info->status);
 		} else {
+			local $! = -$res;
 			$future->fail("waitpid: $!");
 		}
 	});
