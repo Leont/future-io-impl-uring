@@ -1,6 +1,7 @@
 Revision history for Future-IO-Impl-Uring
 
 {{$NEXT}}
+          - Make read_exactly semantics conform to requirements
           - Allow non-positive inputs to waitpid
           - Fix failure arguments of ready_for_read/ready_for_write
 

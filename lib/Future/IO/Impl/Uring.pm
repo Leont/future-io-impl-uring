@@ -164,14 +164,14 @@ sub sysread($self, $fh, $length) {
 
 sub _sysread($fh, $future, $id, $buffer, $length, $offset) {
 	$$id = $ring->read($fh, substr($buffer, $offset), -1, 0, sub($res, $flags) {
-		if ($res >= 0) {
+		if ($res > 0) {
 			if ($offset + $res == $length) {
 				$future->done($buffer);
 			} else {
 				_sysread($fh, $future, $id, $buffer, $length, $offset + $res);
 			}
-		} elsif($offset > 0) {
-			$future->done(substr($buffer, $offset));
+		} elsif($res == 0) {
+			$future->done;
 		} else {
 			local $! = -$res;
 			$future->fail("sysread: $!\n", sysread => $fh, $!);
