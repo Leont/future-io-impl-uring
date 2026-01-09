@@ -14,7 +14,7 @@ use Time::Spec;
 use IO::Socket;
 use IO::Poll qw/POLLIN POLLOUT/;
 
-my $ring = IO::Uring->new(128);
+my $ring = $Future::Uring::ring // IO::Uring->new(128);
 
 sub accept($self, $fh) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
@@ -207,4 +207,4 @@ loaded, and it will provide the C<Future::IO> implementation methods:
 
 It requires Linux kernel 6.7 or higher to function.
 
-=cut
+If L<Future::Uring> has been loaded before this module is, they will share their backend.
