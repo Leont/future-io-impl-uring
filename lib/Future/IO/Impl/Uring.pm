@@ -18,9 +18,10 @@ my $ring = IO::Uring->new(32);
 
 sub accept($self, $fh) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
+	my $class = ref($fh);
 	$ring->accept($fh, 0, sub($res, $flags) {
 		if ($res >= 0) {
-			my $accepted_fd = IO::Socket->new->fdopen($res, 'r+');
+			my $accepted_fd = $class->new->fdopen($res, 'r+');
 			$future->done($accepted_fd);
 		} else {
 			local $! = -$res;

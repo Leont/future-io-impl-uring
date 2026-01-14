@@ -4,6 +4,7 @@ Revision history for Future-IO-Impl-Uring
           - Make read_exactly semantics conform to requirements
           - Allow non-positive inputs to waitpid
           - Fix failure arguments of ready_for_read/ready_for_write
+          - Adopt listener class for new connection in accept
 
 0.003     2026-01-02 22:33:44+01:00 Europe/Brussels
           - Implement send and recv
