@@ -161,32 +161,6 @@ sub sysread($self, $fh, $length) {
 	return $future;
 }
 
-sub _sysread($fh, $future, $id, $buffer, $length, $offset) {
-	$$id = $ring->read($fh, substr($buffer, $offset), -1, 0, sub($res, $flags) {
-		if ($res > 0) {
-			if ($offset + $res == $length) {
-				$future->done($buffer);
-			} else {
-				_sysread($fh, $future, $id, $buffer, $length, $offset + $res);
-			}
-		} elsif($res == 0) {
-			$future->done;
-		} else {
-			local $! = -$res;
-			$future->fail("sysread: $!\n", sysread => $fh, $!);
-		}
-	});
-}
-
-sub sysread_exactly($self, $fh, $length) {
-	my $future = Future::IO::Impl::Uring::_Future->new;
-	my $buffer = "\0" x $length;
-	my $id;
-	_sysread($fh, $future, \$id, $buffer, $length, 0);
-	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
-	return $future;
-}
-
 sub syswrite($self, $fh, $buffer) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $id = $ring->write($fh, $buffer, -1, IOSQE_ASYNC, sub($res, $flags) {
@@ -198,27 +172,6 @@ sub syswrite($self, $fh, $buffer) {
 		}
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
-	return $future;
-}
-
-sub _syswrite($future, $fh, $buffer, $written) {
-	$ring->write($fh, substr($buffer, $written), -1, sub($res, $flags) {
-		if ($res > 0) {
-			if ($res + $written == length $buffer) {
-				$future->done(length $buffer);
-			} else {
-				_syswrite($future, $fh, $buffer, $res + $written);
-			}
-		} else {
-			local $! = -$res;
-			$future->fail("syswrite: $!\n", syswrite => $fh, $!);
-		}
-	});
-}
-
-sub syswrite_exactly($self, $fh, $buffer) {
-	my $future = Future::IO::Impl::Uring::_Future->new;
-	_syswrite($future, $fh, $buffer, 0);
 	return $future;
 }
 
