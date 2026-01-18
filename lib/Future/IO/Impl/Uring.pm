@@ -21,7 +21,7 @@ sub accept($self, $fh) {
 	my $class = ref($fh);
 	my $id = $ring->accept($fh, 0, sub($res, $flags) {
 		if ($res >= 0) {
-			my $accepted_fd = $class->new->fdopen($res, 'r+');
+			my $accepted_fd = $class->new_from_fd($res, 'r+');
 			$future->done($accepted_fd);
 		} else {
 			local $! = -$res;
