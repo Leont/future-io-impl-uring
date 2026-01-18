@@ -19,7 +19,7 @@ my $ring = IO::Uring->new(128);
 sub accept($self, $fh) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $class = ref($fh);
-	$ring->accept($fh, 0, sub($res, $flags) {
+	my $id = $ring->accept($fh, 0, sub($res, $flags) {
 		if ($res >= 0) {
 			my $accepted_fd = $class->new->fdopen($res, 'r+');
 			$future->done($accepted_fd);
@@ -28,6 +28,7 @@ sub accept($self, $fh) {
 			$future->fail("Accept: $!\n", accept => $fh, $!)
 		}
 	});
+	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
 }
 
