@@ -1,6 +1,7 @@
 Revision history for Future-IO-Impl-Uring
 
 {{$NEXT}}
+          - Eliminate IOSQE_ASYNC
 
 0.004     2026-01-18 16:17:51+01:00 Europe/Brussels
           - Allow non-positive inputs to waitpid

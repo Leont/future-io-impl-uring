@@ -7,7 +7,7 @@ use experimental 'signatures';
 use parent 'Future::IO::ImplBase';
 __PACKAGE__->APPLY;
 
-use IO::Uring qw/IOSQE_ASYNC IORING_TIMEOUT_ABS IORING_TIMEOUT_REALTIME IORING_TIMEOUT_ETIME_SUCCESS P_PID P_PGID P_ALL WEXITED/;
+use IO::Uring qw/IORING_TIMEOUT_ABS IORING_TIMEOUT_REALTIME IORING_TIMEOUT_ETIME_SUCCESS P_PID P_PGID P_ALL WEXITED/;
 use Errno 'ETIME';
 use Signal::Info qw/CLD_EXITED/;
 use Time::Spec;
@@ -94,7 +94,7 @@ sub recv($self, $fh, $length, $flags) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $buffer = "\0" x $length;
 	$flags //= 0;
-	my $id = $ring->recv($fh, $buffer, $flags, 0, IOSQE_ASYNC, sub($res, $flags) {
+	my $id = $ring->recv($fh, $buffer, $flags, 0, 0, sub($res, $flags) {
 		if ($res > 0) {
 			$future->done($res == $length ? $buffer : substr($buffer, 0, $res));
 		} elsif ($res == 0) {
@@ -121,9 +121,9 @@ sub send($self, $fh, $buffer, $flags, $to) {
 	$flags //= 0;
 	my $id;
 	if (defined $to) {
-		$id = $ring->sendto($fh, $buffer, $flags, $to, 0, IOSQE_ASYNC, $callback);
+		$id = $ring->sendto($fh, $buffer, $flags, $to, 0, 0, $callback);
 	} else {
-		$id = $ring->send($fh, $buffer, $flags, 0, IOSQE_ASYNC, $callback);
+		$id = $ring->send($fh, $buffer, $flags, 0, 0, $callback);
 	}
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
@@ -148,7 +148,7 @@ sub sleep($self, $seconds) {
 sub sysread($self, $fh, $length) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
 	my $buffer = "\0" x $length;
-	my $id = $ring->read($fh, $buffer, -1, IOSQE_ASYNC, sub($res, $flags) {
+	my $id = $ring->read($fh, $buffer, -1, 0, sub($res, $flags) {
 		if ($res > 0) {
 			$future->done($res == $length ? $buffer : substr($buffer, 0, $res));
 		} elsif ($res == 0) {
@@ -164,7 +164,7 @@ sub sysread($self, $fh, $length) {
 
 sub syswrite($self, $fh, $buffer) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
-	my $id = $ring->write($fh, $buffer, -1, IOSQE_ASYNC, sub($res, $flags) {
+	my $id = $ring->write($fh, $buffer, -1, 0, sub($res, $flags) {
 		if ($res >= 0) {
 			$future->done($res);
 		} else {
