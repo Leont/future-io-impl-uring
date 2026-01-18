@@ -14,7 +14,7 @@ use Time::Spec;
 use IO::Socket;
 use IO::Poll qw/POLLIN POLLOUT/;
 
-my $ring = IO::Uring->new(32);
+my $ring = IO::Uring->new(128);
 
 sub accept($self, $fh) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
