@@ -1,6 +1,8 @@
 Revision history for Future-IO-Impl-Uring
 
 {{$NEXT}}
+
+0.005     2026-01-18 23:32:06+01:00 Europe/Brussels
           - Eliminate IOSQE_ASYNC
           - Add poll method
           - Reuse ring from Future::Uring if available
