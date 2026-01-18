@@ -62,28 +62,14 @@ sub connect($self, $fh, $name) {
 	return $future;
 }
 
-sub ready_for_read($self, $fh) {
+sub poll($self, $fh, $mask) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
-	my $id = $ring->poll($fh, POLLIN, 0, sub($res, $flags) {
+	my $id = $ring->poll($fh, $mask, 0, sub($res, $flags) {
 		if ($res >= 0) {
-			$future->done;
+			$future->done($res);
 		} else {
 			local $! = -$res;
-			$future->fail("ready_for_read: $!\n", ready_for_read => $fh, $!);
-		}
-	});
-	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
-	return $future;
-}
-
-sub ready_for_write($self, $fh) {
-	my $future = Future::IO::Impl::Uring::_Future->new;
-	my $id = $ring->poll($fh, POLLOUT, 0, sub($res, $flags) {
-		if ($res >= 0) {
-			$future->done;
-		} else {
-			local $! = -$res;
-			$future->fail("ready_for_write: $!\n", ready_for_write => $fh, $!);
+			$future->fail("poll: $!\n", poll => $fh, $!);
 		}
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
