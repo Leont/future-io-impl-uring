@@ -103,6 +103,7 @@ sub send($self, $fh, $buffer, $flags, $to) {
 			local $! = -$res;
 			$future->fail("send: $!\n", send => $fh, $!);
 		}
+		$buffer;
 	};
 	$flags //= 0;
 	my $id;
@@ -157,6 +158,7 @@ sub syswrite($self, $fh, $buffer) {
 			local $! = -$res;
 			$future->fail("syswrite: $!\n", syswrite => $fh, $!);
 		}
+		$buffer;
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
 	return $future;
