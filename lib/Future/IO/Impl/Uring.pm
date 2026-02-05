@@ -169,7 +169,7 @@ sub waitpid($self, $pid) {
 			$future->done($info->code == CLD_EXITED ? ($info->status << 8) : $info->status);
 		} else {
 			local $! = -$res;
-			$future->fail("waitpid: $!", waitpid => $pid, $!);
+			$future->fail("waitpid: $!\n", waitpid => $pid, $!);
 		}
 	});
 	$future->on_cancel(sub { $ring->cancel($id, 0, 0) });
