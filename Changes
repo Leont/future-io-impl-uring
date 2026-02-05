@@ -1,6 +1,8 @@
 Revision history for Future-IO-Impl-Uring
 
 {{$NEXT}}
+
+0.007     2026-02-05 18:21:36+01:00 Europe/Brussels
           - Use IO::Uring 0.011 for easier memory management
           - Add newline to failure message of waitpid
 
