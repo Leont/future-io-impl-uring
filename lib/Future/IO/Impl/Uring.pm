@@ -7,12 +7,12 @@ use experimental 'signatures';
 use parent 'Future::IO::ImplBase';
 __PACKAGE__->APPLY;
 
+use Future::IO 0.019 qw/POLLIN POLLOUT/;
 use IO::Uring 0.011 qw/IORING_TIMEOUT_ABS IORING_TIMEOUT_REALTIME IORING_TIMEOUT_ETIME_SUCCESS P_PID P_PGID P_ALL WEXITED/;
 use Errno 'ETIME';
 use Signal::Info qw/CLD_EXITED/;
 use Time::Spec;
 use IO::Socket;
-use IO::Poll qw/POLLIN POLLOUT/;
 
 my $ring = $Future::Uring::ring // IO::Uring->new(128);
 
