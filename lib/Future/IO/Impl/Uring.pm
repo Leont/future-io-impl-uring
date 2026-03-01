@@ -20,7 +20,7 @@ sub _ring;
 
 sub accept($self, $fh) {
 	my $future = Future::IO::Impl::Uring::_Future->new;
-	my $class = ref($fh);
+	my $class = ref $fh;
 	my $id = _ring()->accept($fh, 0, sub($res, $flags) {
 		if ($res >= 0) {
 			my $accepted_fd = $class->new_from_fd($res, 'r+');
@@ -83,7 +83,7 @@ sub recv($self, $fh, $length, $flags) {
 	$flags //= 0;
 	my $id = _ring()->recv($fh, $buffer, $flags, 0, 0, sub($res, $flags) {
 		if ($res > 0) {
-			$future->done($res == $length ? $buffer : substr($buffer, 0, $res));
+			$future->done($res == $length ? $buffer : substr $buffer, 0, $res);
 		} elsif ($res == 0) {
 			$future->done;
 		} else {
@@ -136,7 +136,7 @@ sub sysread($self, $fh, $length) {
 	my $buffer = "\0" x $length;
 	my $id = _ring()->read($fh, $buffer, -1, 0, sub($res, $flags) {
 		if ($res > 0) {
-			$future->done($res == $length ? $buffer : substr($buffer, 0, $res));
+			$future->done($res == $length ? $buffer : substr $buffer, 0, $res);
 		} elsif ($res == 0) {
 			$future->done;
 		} else {
